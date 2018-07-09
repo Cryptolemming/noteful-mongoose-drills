@@ -5,81 +5,170 @@ const { MONGODB_URI } = require('../config');
 
 const Note = require('../models/note');
 
+const printColorFormat = '\x1b[36m%s\x1b[0m';
+
+const printBuilder = (text) => {
+	console.log(printColorFormat,
+				'####################################################\n' +
+				text + '\n' +
+				'####################################################\n');
+};
+
 mongoose.connect(MONGODB_URI)
   .then(() => {
+	  // find all the notes using Note.find()
+	  printBuilder('Find all the notes');
 
-    /**
-     * Find/Search for notes using Note.find
-     */
-    const searchTerm = 'gaga';
-    let filter = {};
+	  return Note.find();
+  })
+  .then(result => {
+	  console.log(result + '\n\n');
+  })
+  .then(() => {
+	  // find all the notes using Note.find() with a condition to select only
+	  // for title and content fields (_id will be included by default)
+	  printBuilder('Find all the notes selecting for title field');
 
-    if (searchTerm) {
-      // Using the `$regex` operator (case-sensitive by default)
-      filter.title = { $regex: searchTerm };
+	  return Note.find({}, 'title');
+  })
+  .then(result => {
+	  console.log(result + '\n\n');
+  })
+  .then(() => {
+	  // find all the notes using Note.find() selecting for the title field value of
+	  // '5 life lessons learned from cats'
+	  printBuilder('Find all the notes with the title \'5 life lessons learned from cats');
 
-      // Using the `$regex` operator with case-insensitive `i` option
-      // filter.title = { $regex: searchTerm, $options: 'i' };
+	  const searchTerm = '5 life lessons learned from cats';
+	  let filter = {};
 
-      // Alternative using regex `/pattern/i` but not recommended
-      // filter.title = /ways/i;
-    }
+	  if(searchTerm) {
+		  filter.title = { title: searchTerm };
+	  }
 
-    return Note.find(filter).sort({ updatedAt: 'desc' })
-      .then(results => {
-        console.log(results);
-      });
+	  return Note.find(filter.title);
+  })
+  .then(result => {
+	  console.log(result + '\n\n');
+  })
+  .then(() => {
+	  // find the first 5 notes using Note.find()
+	  printBuilder('Find the first 5 notes');
 
-    /**
-     * Find note by id using Note.findById
-     */
-    // return Note.findById('000000000000000000000003')
-    //   .then(result => {
-    //     if (result) {
-    //       console.log(result);
-    //     } else {
-    //       console.log('not found');
-    //     }
-    //   });
+	  const limit = 5;
+	  let filter = {};
 
-    /**
-     * Create a new note using Note.create
-     */
-    // const newNote = {
-    //   title: 'this is a new note',
-    //   content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.'
-    // };
-    //
-    // return Note.create(newNote)
-    //   .then(result => {
-    //     console.log(result);
-    //   });
+	  if(limit) {
+		  filter.limit = limit;
+	  }
 
-    /**
-     * Update a note by id using Note.findByIdAndUpdate
-     */
-    // const updateNote = {
-    //   title: 'updated title',
-    //   content: 'Posuere sollicitudin aliquam ultrices sagittis orci a. Feugiat sed lectus vestibulum mattis ullamcorper velit. Odio pellentesque diam volutpat commodo sed egestas egestas fringilla. Velit egestas dui id ornare arcu odio. Molestie at elementum eu facilisis sed odio morbi. Tempor nec feugiat nisl pretium. At tempor commodo ullamcorper a lacus. Egestas dui id ornare arcu odio. Id cursus metus aliquam eleifend. Vitae sapien pellentesque habitant morbi tristique. Dis parturient montes nascetur ridiculus. Egestas egestas fringilla phasellus faucibus scelerisque eleifend. Aliquam faucibus purus in massa tempor nec feugiat nisl.'
-    // };
+	  return Note.find({}, null, filter);
+  })
+  .then(result => {
+	  console.log(result + '\n\n');
+  })
+  .then(() => {
+	  // find the next 5 notes using Note.find() after skipping the first 5
+	  printBuilder('Find the first 5 notes after skipping the first 5');
 
-    // return Note.findByIdAndUpdate('000000000000000000000003', updateNote, { new: true })
-    //   .then(result => {
-    //     if (result) {
-    //       console.log(result);
-    //     } else {
-    //       console.log('not found');
-    //     }
-    //   });
+	  const limit = 5;
+	  const skip = 5;
+	  let filter = {};
 
-    /**
-     * Delete a note by id using Note.findByIdAndRemove
-     */
-    // return Note.findByIdAndRemove('000000000000000000000004')
-    //   .then(result => {
-    //     console.log('deleted', result);
-    //   });
+	  if(limit && skip) {
+		  filter.condition = { skip, limit };
+	  }
 
+	  return Note.find({}, null, filter.condition);
+  })
+  .then(result => {
+	console.log(result + '\n\n');
+  })
+  .then(() => {
+	// count the number of documents
+	printBuilder('Count the number of documents');
+
+	return Note.countDocuments();
+  })
+  .then(result => {
+  	console.log(result + '\n\n');
+  })
+  .then(() => {
+	  // find notes with _id greater than "000000000000000000000007"
+	  printBuilder('Find the notes with _id greater than 7');
+
+	  const id = "000000000000000000000007";
+	  let filter = {};
+
+	  if (id) {
+		  filter._id = { $gt: id };
+	  };
+
+	  return Note.find(filter);
+  })
+  .then(result => {
+  	console.log(result + '\n\n');
+  })
+  .then(() => {
+	// find notes with _ids between "000000000000000000000009"
+	// and "000000000000000000000017" inclusive
+	printBuilder('Find the notes with _id between 9 and 17 inclusive');
+
+	const idStart = "000000000000000000000009";
+	const idFinish = "000000000000000000000017";
+	let filter = {};
+
+	if (idStart && idFinish) {
+		filter._id = { $gte: idStart, $lte: idFinish };
+	};
+
+	return Note.find(filter);
+  })
+  .then(result => {
+	  console.log(result + '\n\n');
+  })
+  .then(() => {
+	  // find notes with _ids less than or equal to "000000000000000000000007"
+	  printBuilder('Find the notes with _id less than or equal to 7');
+
+	  const id = "000000000000000000000007";
+	  let filter = {};
+
+	  if (id) {
+		  filter._id = { $lte: id };
+	  };
+
+	  return Note.find(filter);
+  })
+  .then(result => {
+	console.log(result + '\n\n');
+  })
+  .then(() => {
+	  // find one note using Note.findOne()
+	  printBuilder('Find one note');
+
+	  return Note.findOne();
+  })
+  .then(result => {
+	console.log(result + '\n\n');
+  })
+  .then(() => {
+	// find one note using Note.findOne() and display only the title
+	printBuilder('Find one note and display only the title');
+
+	return Note.findOne({}, 'title');
+  })
+  .then(result => {
+	  console.log(result + '\n\n');
+  })
+  .then(() => {
+	  // insert one note using
+	  printBuilder('Find one note and display only the title');
+
+	  return Note.findOne({}, 'title');
+  })
+  .then(result => {
+	console.log(result + '\n\n');
   })
   .then(() => {
     return mongoose.disconnect();
